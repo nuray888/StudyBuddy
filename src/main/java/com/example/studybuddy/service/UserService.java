@@ -1,8 +1,9 @@
 package com.example.studybuddy.service;
 
-import com.example.studybuddy.dto.request.UserRequest;
-import com.example.studybuddy.dto.response.UserResponse;
-import com.example.studybuddy.model.User;
+import com.example.studybuddy.dto.request.LoginRequestDto;
+import com.example.studybuddy.dto.request.UserRequestDto;
+import com.example.studybuddy.dto.response.UserResponseDto;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,12 +11,17 @@ import java.util.List;
 @Service
 public interface UserService {
 
-    List<UserResponse> getAll();
-    String create(UserRequest userRequest);
-    UserResponse findByID(Long id);
-    UserResponse update(Long id, UserRequest userRequest);
-    String delete(Long id);
-    public void updateLastSeen(User user);
+    List<UserResponseDto> getAll();
+    String create(UserRequestDto userRequestDto);
+    ResponseEntity<?> authenticate(LoginRequestDto loginReq);
+
+    UserResponseDto findByID(Long id);
+    UserResponseDto update(Long id, UserRequestDto userRequestDto);
+    UserRequestDto delete(Long id);
+    void updateLastSeen(Long id);
+
+//    List<MatchResponse> findMatches(Long id);
+
 
 
 

@@ -4,22 +4,26 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PostResponse {
+public class PostPageAndSortDto {
     private Long id;
     private String topic;
     private String subTopic;
-    private String createDate;
+    private Date createDate;
     private String userName;
+    private List<MatchResponseDto> matches;
 
-    public void setCreateDate(Date date) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        this.createDate = sdf.format(date);
-    }
+
+    //pagination
+    private Integer pageNumber;
+    private Integer pageSize;
+    private Long totalElements;
+    private Integer totalPages;
+    private boolean lastPage;
 
 }

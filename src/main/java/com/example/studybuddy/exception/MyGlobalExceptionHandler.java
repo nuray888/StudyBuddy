@@ -1,5 +1,6 @@
 package com.example.studybuddy.exception;
 
+import com.example.studybuddy.dto.response.APIResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -23,19 +24,21 @@ public class MyGlobalExceptionHandler {
             String message = err.getDefaultMessage();
             response.put(fieldName, message);
         });
-        return new ResponseEntity<Map<String, String>>(response,
+        return new ResponseEntity<>(response,
                 HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<String> myResourceNotFoundException(ResourceNotFoundException e) {
+    public ResponseEntity<APIResponseDto> myResourceNotFoundException(ResourceNotFoundException e) {
         String message = e.getMessage();
-        return new ResponseEntity<>(message, HttpStatus.NOT_FOUND);
+        APIResponseDto apiResponseDto =new APIResponseDto(message,false);
+        return new ResponseEntity<>(apiResponseDto, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(APIException.class)
-    public ResponseEntity<String> myAPIException(APIException e) {
+    public ResponseEntity<APIResponseDto> myAPIException(APIException e) {
         String message = e.getMessage();
-        return new ResponseEntity<>(message, HttpStatus.BAD_REQUEST);
+        APIResponseDto apiResponseDto =new APIResponseDto(message,false);
+        return new ResponseEntity<>(apiResponseDto, HttpStatus.BAD_REQUEST);
     }
 }

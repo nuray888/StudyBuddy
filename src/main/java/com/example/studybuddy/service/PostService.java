@@ -1,19 +1,21 @@
 package com.example.studybuddy.service;
 
-import com.example.studybuddy.dto.request.PostRequest;
-import com.example.studybuddy.dto.response.PostResponse;
-import org.springframework.stereotype.Service;
+import com.example.studybuddy.dto.request.PostRequestDto;
+import com.example.studybuddy.dto.response.PostPageAndSortDto;
+import com.example.studybuddy.dto.response.PostPageAndSortDto2;
+import com.example.studybuddy.dto.response.PostResponseDto;
 
 import java.util.List;
 
-@Service
 public interface PostService {
 
-    public List<PostResponse> getAll();
-    public PostResponse create(PostRequest postRequest);
-    public PostResponse findByID(Long id);
-    public PostResponse update(Long id, PostRequest postRequest);
-    public String delete(Long id);
-    public List<PostResponse> findPostsByUserId(Long userId);
+    PostPageAndSortDto2 getAll(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
+    PostResponseDto create(PostRequestDto postRequestDto);
+    PostPageAndSortDto findByID(Long id);
+    PostPageAndSortDto update(Long id, PostRequestDto postRequestDto);
+    PostRequestDto delete(Long id);
+    List<PostPageAndSortDto> findPostsByUserId(Long userId);
+
+    List<PostPageAndSortDto> findByKeyword(String topic);
 
 }

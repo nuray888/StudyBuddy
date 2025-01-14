@@ -1,11 +1,11 @@
 package com.example.studybuddy.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 
 import java.util.Date;
@@ -18,27 +18,23 @@ public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Size(min = 4, message = "Post name must contain at least 4 character")
     @Column(nullable = false)
     private String topic;
     @Column(name = "sub_topic")
     private String subTopic;
 
-
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(nullable =false)
     private Date createDate;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
-
-
-    @PrePersist
-    protected void onCreate() {
-        createDate = new Date(); // Set the current date
+    //That's for testing
+    public Post(Long id, String topic, String subTopic) {
+        this.id = id;
+        this.topic = topic;
+        this.subTopic = subTopic;
     }
-
-
 }

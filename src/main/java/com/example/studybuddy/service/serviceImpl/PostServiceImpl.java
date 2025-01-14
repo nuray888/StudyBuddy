@@ -1,7 +1,10 @@
 package com.example.studybuddy.service.serviceImpl;
 
-import com.example.studybuddy.dto.request.PostRequest;
-import com.example.studybuddy.dto.response.PostResponse;
+import com.example.studybuddy.dto.request.PostRequestDto;
+import com.example.studybuddy.dto.response.MatchResponseDto;
+import com.example.studybuddy.dto.response.PostPageAndSortDto;
+import com.example.studybuddy.dto.response.PostPageAndSortDto2;
+import com.example.studybuddy.dto.response.PostResponseDto;
 import com.example.studybuddy.exception.APIException;
 import com.example.studybuddy.exception.ResourceNotFoundException;
 import com.example.studybuddy.model.Post;
@@ -12,6 +15,10 @@ import com.example.studybuddy.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -24,89 +31,164 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class PostServiceImpl implements PostService {
-        private final PostRepository repository;
-        private final ModelMapper modelMapper;
-        private final UserRepository userRepository;
-        private final RestTemplate restTemplate;
+    private final PostRepository repository;
+    private final ModelMapper modelMapper;
+    private final UserRepository userRepository;
+    private final RestTemplate restTemplate;
+    private final MatchServiceImpl matchServiceImpl;
+    private final EmailServiceImpl emailServiceImpl;
+
 
     @Value("${gemini.api.key}")
     private String geminiApiKey;
 
-        public List<PostResponse> getAll () {
-            List<Post> all = repository.findAll();
-            if (all.isEmpty())
-                throw new APIException("There is no post");
-            List<PostResponse> list = all.stream()
-                    .map(s -> modelMapper.map(s, PostResponse.class))
-                    .toList();
-            return list;
+//        public List<PostResponse> getAll (Integer pageNumber,Integer pageSize,String sortBy,String sortOrder) {
+//            Sort sortByAndOrder=sortOrder.equalsIgnoreCase("desc")
+//                    ? Sort.by(sortBy).ascending()
+//                    :Sort.by(sortBy).descending();
+//
+//            Pageable pageDetails=PageRequest.of(pageNumber,pageSize,sortByAndOrder);
+//            Page<Post> postPage=repository.findAll(pageDetails);
+//            List<Post> posts = postPage.getContent();
+//
+//           if (posts.isEmpty())
+//               throw new APIException("There is no post");
+//
+//            List<PostResponse> list = posts.stream()
+//                    .map(s -> modelMapper.map(s, PostResponse.class))
+//                    .toList();
+//            PostResponse postResponse = new PostResponse();
+//            postResponse.setPageNumber(postPage.getNumber());
+//            postResponse.setPageSize(postPage.getSize());
+//            postResponse.setTotalPages(postPage.getTotalPages());
+//            postResponse.setTotalElements(postPage.getTotalElements());
+//            postResponse.setLastPage(postPage.isLast());
+//
+//            return list;
+//
+//
+//        }
+
+    public PostPageAndSortDto2 getAll(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+        Sort sortByAndOrder = sortOrder.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
+        Page<Post> postPage = repository.findAll(pageDetails);
+        List<Post> posts = postPage.getContent();
+
+        if (posts.isEmpty()) {
+            throw new APIException("There is no post");
         }
+        List<PostResponseDto> postDtos = posts.stream().map(p -> modelMapper.map(p, PostResponseDto.class)).toList();
+        PostPageAndSortDto2 response = new PostPageAndSortDto2();
+        response.setPosts(postDtos);
+        response.setLastPage(postPage.isLast());
+        response.setPageNumber(postPage.getNumber());
+        response.setPageSize(postPage.getSize());
+        response.setTotalPages(postPage.getTotalPages());
+        response.setTotalElements(postPage.getTotalElements());
+        // Map posts to PostResponse
+//        List<PostResponse> list = posts.stream()
+//                .map(s -> modelMapper.map(s, PostResponse.class))
+//                .toList();
 
-        public boolean isStudyRelated(String topic, String subtopic) {
-            String url = String.format("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=%s", geminiApiKey);
-            String requestBody = String.format("{\"contents\":[{\"parts\":[{\"text\":\"Is the topic '%s' and subtopic '%s' related to study? Respond with 'yes' or 'no'\"}]}]}", topic, subtopic);
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Content-Type", "application/json");
-            HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
-            ResponseEntity<String> response;
-            try {
-                response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
-            } catch (HttpClientErrorException e) {
-                throw new RuntimeException("Error calling Gemini API: " + e.getResponseBodyAsString());
-            }
-            return response.getBody() != null && response.getBody().contains("yes"); // Adjust accordingly
+        // Explicitly set pagination fields in the first object (if exists)
+//        if (!list.isEmpty()) {
+//            PostResponse firstPostResponse = list.get(0);
+//            firstPostResponse.setPageNumber(postPage.getNumber());
+//            firstPostResponse.setPageSize(postPage.getSize());
+//            firstPostResponse.setTotalPages(postPage.getTotalPages());
+//            firstPostResponse.setTotalElements(postPage.getTotalElements());
+//            firstPostResponse.setLastPage(postPage.isLast());
+//        }
+
+        return response;
+    }
+
+
+    public boolean isStudyRelated(String topic, String subtopic) {
+        String url = String.format("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=%s", geminiApiKey);
+        String requestBody = String.format("{\"contents\":[{\"parts\":[{\"text\":\"Is the topic '%s' and subtopic '%s' related to study? Respond with 'yes' or 'no'\"}]}]}", topic, subtopic);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Content-Type", "application/json");
+        HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
+        ResponseEntity<String> response;
+        try {
+            response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+        } catch (HttpClientErrorException e) {
+            throw new RuntimeException("Error calling Gemini API: " + e.getResponseBodyAsString());
         }
+        return response.getBody() != null && response.getBody().contains("yes"); // Adjust accordingly
+    }
 
 
-    public PostResponse create(PostRequest postRequest) {
-        User user = userRepository.findById(postRequest.getUserId())
+    public PostResponseDto create(PostRequestDto postRequestDto) {
+        User user = userRepository.findById(postRequestDto.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (!isStudyRelated(postRequest.getTopic(), postRequest.getSubTopic())) {
+        if (!isStudyRelated(postRequestDto.getTopic(), postRequestDto.getSubTopic())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic and subtopic must be study-related.");
         }
 
-        Post post = modelMapper.map(postRequest, Post.class);
+        Post post = modelMapper.map(postRequestDto, Post.class);
         post.setUser(user);
-        post.setCreateDate(new Date()); // This line sets the create date directly
+        post.setCreateDate(new Date());
 
         Post savedPost = repository.save(post);
 
-        PostResponse response = modelMapper.map(savedPost, PostResponse.class);
-        response.setCreateDate(savedPost.getCreateDate());
+        // Eşleşmeler oluştur
+        List<MatchResponseDto> matches = matchServiceImpl.findMatches(user.getId());
+
+        // Eşleşme bildirimlerini gönder
+        for (MatchResponseDto match : matches) {
+            emailServiceImpl.sendMatchNotification(match.getMatchedUserEmail(), user.getUserName());
+            emailServiceImpl.sendMatchNotification(user.getEmail(), match.getMatchedUserName());
+        }
+
+        // PostResponse nesnesini oluştur ve geri döndür
+        PostResponseDto response = modelMapper.map(savedPost, PostResponseDto.class);
+//        response.setCreateDate(savedPost.getCreateDate());
+        response.setMatches(matches); // Eşleşmelerin listesi
         return response;
     }
 
 
     @Override
-    public PostResponse findByID(Long id) {
+    public PostPageAndSortDto findByID(Long id) {
         Post post = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post not found with " + id));
-        return modelMapper.map(post, PostResponse.class);
+        return modelMapper.map(post, PostPageAndSortDto.class);
     }
 
 
     @Override
-    public PostResponse update(Long id, PostRequest postRequest) {
-        Post post = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post not foun with " + id));
-        modelMapper.map(postRequest, post);
+    public PostPageAndSortDto update(Long id, PostRequestDto postRequestDto) {
+        Post post = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post not found with " + id));
+        modelMapper.map(postRequestDto, post);
         Post updatedPost = repository.save(post);
-        return modelMapper.map(updatedPost, PostResponse.class);
+        return modelMapper.map(updatedPost, PostPageAndSortDto.class);
     }
 
     @Override
-    public String delete(Long id) {
+    public PostRequestDto delete(Long id) {
         Post post = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post not found with " + id));
         repository.delete(post);
-        return "Successfully deleted";
+        return modelMapper.map(post, PostRequestDto.class);
     }
 
-    public List<PostResponse> findPostsByUserId(Long userId) {
+    public List<PostPageAndSortDto> findPostsByUserId(Long userId) {
         List<Post> posts = repository.findByUserId(userId);
-        return posts.stream()
-                .map(post -> {
-                    PostResponse response = modelMapper.map(post, PostResponse.class);
-                    response.setUserName(post.getUser().getUserName());
-                    return response;
-                }).toList();
+        if (posts.isEmpty()) {
+            throw new APIException("This user does not have posts");
+        }
+        return posts.stream().map(post -> modelMapper.map(post, PostPageAndSortDto.class)).toList();
+
+    }
+
+    @Override
+    public List<PostPageAndSortDto> findByKeyword(String topic) {
+        List<Post> posts = repository.findByTopicLikeIgnoreCase(topic);
+        return posts.stream().map(p -> modelMapper.map(p, PostPageAndSortDto.class)).toList();
     }
 }

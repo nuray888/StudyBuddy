@@ -17,12 +17,27 @@ public class User {
     private Long id;
     @Column(unique = true)
     private String userName;
-    private Status status;
-    private LocalDate lastSeen;
+    //    private MessageStatus status;
+//    private LocalDate lastSeen;
 
     @Email
     @Column(unique = true)
     private String email;
+    private String password;
+
+    @JsonIgnore
+    @ManyToMany
+    @JoinTable(name = "user_authorities",
+            joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
+            inverseJoinColumns = {@JoinColumn(name = "authority_name", referencedColumnName = "name")})
+    private Set<Authority> authorities = new HashSet<>();
+
+
+    public User(String username, String password) {
+        this.userName = username;
+        this.password = password;
+    }
+
 
 //    @Column(nullable = true)
 //    private int avatar;
@@ -31,6 +46,11 @@ public class User {
     private List<Post> posts = new ArrayList<>();
 
 
+//    @OneToMany(mappedBy = "user1")
+//    private List<ChatRoom> chatsAsUser1;
+//
+//    @OneToMany(mappedBy = "user2")
+//    private List<ChatRoom> chatsAsUser2;
 
 
 }
