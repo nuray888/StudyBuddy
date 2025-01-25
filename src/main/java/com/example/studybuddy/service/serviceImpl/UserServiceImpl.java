@@ -3,6 +3,7 @@ package com.example.studybuddy.service.serviceImpl;
 import com.example.studybuddy.dto.ExceptionDTO;
 import com.example.studybuddy.dto.request.LoginRequestDto;
 import com.example.studybuddy.dto.request.UserRequestDto;
+import com.example.studybuddy.dto.request.UserUpdateRequestDto;
 import com.example.studybuddy.dto.response.LoginResponseDto;
 import com.example.studybuddy.dto.response.UserResponseDto;
 import com.example.studybuddy.exception.APIException;
@@ -23,6 +24,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -81,11 +83,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponseDto update(Long id, UserRequestDto userRequestDto) {
-        User user = userRepository.findById(id).orElseThrow();
-        modelMapper.map(userRequestDto, user);
-        User updatedUser = userRepository.save(user);
-        return modelMapper.map(updatedUser, UserResponseDto.class);
+    public UserResponseDto update(UserUpdateRequestDto userUpdateRequestDto) {
+        User currentUser = getCurrentUser();
+
+        // Update only the email if provided
+        if (userUpdateRequestDto.getEmail() != null && !userUpdateRequestDto.getEmail().isEmpty()) {
+            currentUser.setEmail(userUpdateRequestDto.getEmail());
+        } else {
+            throw new APIException("Email cannot be null or empty");
+        }
+
+        // Save the updated user
+        userRepository.save(currentUser);
+
+        // Return the updated user as a DTO
+        return modelMapper.map(currentUser, UserResponseDto.class);
     }
 
     @Override
@@ -103,40 +115,17 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
-    @Override
-    public ResponseEntity<?> authenticate(LoginRequestDto loginReq) {
-        log.info("authenticate method started by: {}", loginReq.getUserName());
-        Authentication authentication =
-                authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginReq.getUserName(),
-                        loginReq.getPassword()));
-        if (authentication.isAuthenticated()) {
-        }
-        try {
-            log.info("authentication details: {}", authentication);
-            String username = authentication.getName();
-            User client = new User(username, "");
-            String token = jwtUtil.createToken(client);
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.AUTHORIZATION, "Bearer " + token);
-            LoginResponseDto loginRes = new LoginResponseDto(username, token);
-            log.info("user: {} logged in", client.getUserName());
-            return ResponseEntity.status(HttpStatus.OK).headers(headers).body(loginRes);
-
-        } catch (BadCredentialsException e) {
-            ExceptionDTO exceptionDTO = new ExceptionDTO(HttpStatus.BAD_REQUEST.value(), "Invalid username or password");
-            log.error("Error due to {} ", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exceptionDTO);
-        } catch (Exception e) {
-            ExceptionDTO exceptionDTO = new ExceptionDTO(HttpStatus.BAD_REQUEST.value(), e.getMessage());
-            log.error("Error due to {} ", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exceptionDTO);
-        }
-    }
-
 //    @Override
 //    public List<MatchResponse> findMatches(Long id) {
 //        findMatches(id);
 //    }
 
+
+    @Override
+    public User getCurrentUser() {
+        String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByUserName(userName)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    }
 
 }

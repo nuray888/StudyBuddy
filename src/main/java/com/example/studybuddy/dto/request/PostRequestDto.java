@@ -16,7 +16,6 @@ public class PostRequestDto {
     @NotBlank
     @Size(min=3,message = "subTopic name must contain at least 3 character")
     private String subTopic;
-    private Long userId;
 
 
 }

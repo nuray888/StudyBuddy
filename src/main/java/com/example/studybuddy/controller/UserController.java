@@ -2,6 +2,7 @@ package com.example.studybuddy.controller;
 
 import com.example.studybuddy.dto.request.LoginRequestDto;
 import com.example.studybuddy.dto.request.UserRequestDto;
+import com.example.studybuddy.dto.request.UserUpdateRequestDto;
 import com.example.studybuddy.dto.response.UserResponseDto;
 import com.example.studybuddy.exception.APIException;
 import com.example.studybuddy.model.ChatMessage;
@@ -24,6 +25,7 @@ public class UserController {
     private final MatchServiceImpl matchService;
     private final ChatMessageServiceImpl chatMessageServiceImpl;
 
+
     @GetMapping("/get-all")
     public ResponseEntity<List<UserResponseDto>> getAllController() {
         List<UserResponseDto> all = service.getAll();
@@ -37,11 +39,6 @@ public class UserController {
         return new ResponseEntity<>(s, HttpStatus.CREATED);
     }
 
-    @ResponseBody
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody @Valid LoginRequestDto loginReq)  {
-        return service.authenticate(loginReq);
-    }
 
     @GetMapping("/find/by/{id}")
     public ResponseEntity<UserResponseDto> findById(@PathVariable Long id) {
@@ -56,20 +53,25 @@ public class UserController {
 
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<UserResponseDto> updateController(@PathVariable Long id, @RequestBody @Valid UserRequestDto userRequestDto) {
-        UserResponseDto update = service.update(id, userRequestDto);
+    @PutMapping("/update")
+    public ResponseEntity<UserResponseDto> updateController(@RequestBody @Valid UserUpdateRequestDto userRequestDto) {
+        UserResponseDto update = service.update(userRequestDto);
         return new ResponseEntity<>(update, HttpStatus.OK);
     }
 
 
     @GetMapping("{userId}/lastSeen")
     public void lastSeen(@PathVariable Long userId) {
+
         service.updateLastSeen(userId);
     }
 
     @PostMapping("/{senderId}/send-message/{recipientId}")
     public ResponseEntity<String> sendTestMessage(@PathVariable Long senderId, @PathVariable Long recipientId, @RequestBody String message) {
+
+       // Context daxilinden userId goturulmelidir ve evez olunmalidir
+
+
         boolean canChat=matchService.canUsersChat(senderId,recipientId);
         if(!canChat){
             throw new APIException("You can't send messages to this user.");
@@ -84,6 +86,13 @@ public class UserController {
 
         return new ResponseEntity<>("Message sent", HttpStatus.OK);
     }
+//    @PostMapping("send-message/{recipientId}")
+//    public ResponseEntity<String> sendTestMessage(@PathVariable Long recipientId,@RequestBody String message){
+//        Long senderId=getCurrent
+//    }
+
+
+
 
 
     @GetMapping("/{userId}/chat-with/{otherUserId}/messages")

@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.*;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -125,8 +126,7 @@ public class PostServiceImpl implements PostService {
 
 
     public PostResponseDto create(PostRequestDto postRequestDto) {
-        User user = userRepository.findById(postRequestDto.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User user = getCurrentUser();
 
         if (!isStudyRelated(postRequestDto.getTopic(), postRequestDto.getSubTopic())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic and subtopic must be study-related.");
@@ -164,16 +164,28 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public PostPageAndSortDto update(Long id, PostRequestDto postRequestDto) {
+        User user = getCurrentUser();
         Post post = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post not found with " + id));
+
+        if(!post.getUser().equals(user)) {
+            throw new RuntimeException("You do not have permission to update this post");
+        }
+
         modelMapper.map(postRequestDto, post);
+        post.setUser(user);
         Post updatedPost = repository.save(post);
         return modelMapper.map(updatedPost, PostPageAndSortDto.class);
     }
 
     @Override
     public PostRequestDto delete(Long id) {
+        User user = getCurrentUser();
         Post post = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post not found with " + id));
-        repository.delete(post);
+
+        if(!post.getUser().equals(user)) {
+            throw new RuntimeException("You do not have permission to delete this post");
+        }
+        repository.deleteById(id);
         return modelMapper.map(post, PostRequestDto.class);
     }
 
@@ -190,5 +202,12 @@ public class PostServiceImpl implements PostService {
     public List<PostPageAndSortDto> findByKeyword(String topic) {
         List<Post> posts = repository.findByTopicLikeIgnoreCase(topic);
         return posts.stream().map(p -> modelMapper.map(p, PostPageAndSortDto.class)).toList();
+    }
+
+    @Override
+    public User getCurrentUser() {
+        String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByUserName(userName)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 }

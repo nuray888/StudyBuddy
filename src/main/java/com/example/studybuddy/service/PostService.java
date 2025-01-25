@@ -4,6 +4,7 @@ import com.example.studybuddy.dto.request.PostRequestDto;
 import com.example.studybuddy.dto.response.PostPageAndSortDto;
 import com.example.studybuddy.dto.response.PostPageAndSortDto2;
 import com.example.studybuddy.dto.response.PostResponseDto;
+import com.example.studybuddy.model.User;
 
 import java.util.List;
 
@@ -17,5 +18,6 @@ public interface PostService {
     List<PostPageAndSortDto> findPostsByUserId(Long userId);
 
     List<PostPageAndSortDto> findByKeyword(String topic);
+    User getCurrentUser();
 
 }
