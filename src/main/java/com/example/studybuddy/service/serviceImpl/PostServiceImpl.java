@@ -43,32 +43,6 @@ public class PostServiceImpl implements PostService {
     @Value("${gemini.api.key}")
     private String geminiApiKey;
 
-//        public List<PostResponse> getAll (Integer pageNumber,Integer pageSize,String sortBy,String sortOrder) {
-//            Sort sortByAndOrder=sortOrder.equalsIgnoreCase("desc")
-//                    ? Sort.by(sortBy).ascending()
-//                    :Sort.by(sortBy).descending();
-//
-//            Pageable pageDetails=PageRequest.of(pageNumber,pageSize,sortByAndOrder);
-//            Page<Post> postPage=repository.findAll(pageDetails);
-//            List<Post> posts = postPage.getContent();
-//
-//           if (posts.isEmpty())
-//               throw new APIException("There is no post");
-//
-//            List<PostResponse> list = posts.stream()
-//                    .map(s -> modelMapper.map(s, PostResponse.class))
-//                    .toList();
-//            PostResponse postResponse = new PostResponse();
-//            postResponse.setPageNumber(postPage.getNumber());
-//            postResponse.setPageSize(postPage.getSize());
-//            postResponse.setTotalPages(postPage.getTotalPages());
-//            postResponse.setTotalElements(postPage.getTotalElements());
-//            postResponse.setLastPage(postPage.isLast());
-//
-//            return list;
-//
-//
-//        }
 
     public PostPageAndSortDto2 getAll(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
         Sort sortByAndOrder = sortOrder.equalsIgnoreCase("desc")
@@ -90,21 +64,6 @@ public class PostServiceImpl implements PostService {
         response.setPageSize(postPage.getSize());
         response.setTotalPages(postPage.getTotalPages());
         response.setTotalElements(postPage.getTotalElements());
-        // Map posts to PostResponse
-//        List<PostResponse> list = posts.stream()
-//                .map(s -> modelMapper.map(s, PostResponse.class))
-//                .toList();
-
-        // Explicitly set pagination fields in the first object (if exists)
-//        if (!list.isEmpty()) {
-//            PostResponse firstPostResponse = list.get(0);
-//            firstPostResponse.setPageNumber(postPage.getNumber());
-//            firstPostResponse.setPageSize(postPage.getSize());
-//            firstPostResponse.setTotalPages(postPage.getTotalPages());
-//            firstPostResponse.setTotalElements(postPage.getTotalElements());
-//            firstPostResponse.setLastPage(postPage.isLast());
-//        }
-
         return response;
     }
 
@@ -121,7 +80,7 @@ public class PostServiceImpl implements PostService {
         } catch (HttpClientErrorException e) {
             throw new RuntimeException("Error calling Gemini API: " + e.getResponseBodyAsString());
         }
-        return response.getBody() != null && response.getBody().contains("yes"); // Adjust accordingly
+        return response.getBody() != null && response.getBody().contains("yes");
     }
 
 
@@ -138,19 +97,18 @@ public class PostServiceImpl implements PostService {
 
         Post savedPost = repository.save(post);
 
-        // Eşleşmeler oluştur
+
         List<MatchResponseDto> matches = matchServiceImpl.findMatches(user.getId());
 
-        // Eşleşme bildirimlerini gönder
+
         for (MatchResponseDto match : matches) {
             emailServiceImpl.sendMatchNotification(match.getMatchedUserEmail(), user.getUserName());
             emailServiceImpl.sendMatchNotification(user.getEmail(), match.getMatchedUserName());
         }
 
-        // PostResponse nesnesini oluştur ve geri döndür
+
         PostResponseDto response = modelMapper.map(savedPost, PostResponseDto.class);
-//        response.setCreateDate(savedPost.getCreateDate());
-        response.setMatches(matches); // Eşleşmelerin listesi
+        response.setMatches(matches);
         return response;
     }
 

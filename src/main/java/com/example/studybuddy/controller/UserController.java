@@ -6,6 +6,7 @@ import com.example.studybuddy.dto.request.UserUpdateRequestDto;
 import com.example.studybuddy.dto.response.UserResponseDto;
 import com.example.studybuddy.exception.APIException;
 import com.example.studybuddy.model.ChatMessage;
+import com.example.studybuddy.model.User;
 import com.example.studybuddy.service.serviceImpl.ChatMessageServiceImpl;
 import com.example.studybuddy.service.serviceImpl.MatchServiceImpl;
 import com.example.studybuddy.service.serviceImpl.UserServiceImpl;
@@ -13,6 +14,8 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -70,6 +73,9 @@ public class UserController {
     public ResponseEntity<String> sendTestMessage(@PathVariable Long senderId, @PathVariable Long recipientId, @RequestBody String message) {
 
        // Context daxilinden userId goturulmelidir ve evez olunmalidir
+//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//        User currentUser = (User) authentication.getPrincipal(); // User entity'sini al
+//        Long senderId = currentUser.getId();// Kullanıcı ID'sini al
 
 
         boolean canChat=matchService.canUsersChat(senderId,recipientId);
