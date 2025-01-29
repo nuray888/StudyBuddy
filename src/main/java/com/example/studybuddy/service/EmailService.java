@@ -5,5 +5,5 @@ import org.springframework.stereotype.Service;
 
 @Service
 public interface EmailService {
-    void sendMatchNotification(String to, String matchedUserName);
+    void sendMatchNotification(String to, String matchedUserName, boolean isResponse);
 }

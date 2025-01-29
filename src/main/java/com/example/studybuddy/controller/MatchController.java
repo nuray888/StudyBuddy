@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/matches")
@@ -15,14 +18,21 @@ public class MatchController {
 
     private final MatchServiceImpl matchServiceImpl;
 
+
+    @GetMapping("/find-match")
+    public List<MatchResponseDto> findMatch() {
+        return matchServiceImpl.findMatches();
+    }
+
+
     @PostMapping("/request")
     public MatchResponseDto requestMatch(@RequestBody MatchRequestDto matchRequestDto) {
-        return matchServiceImpl.requestMatch(matchRequestDto.getRequesterId(), matchRequestDto.getReceiverId());
+        return matchServiceImpl.requestMatch(matchRequestDto);
     }
 
     @PostMapping("/{matchId}/respond")
-    public void respondToMatch(@PathVariable Long matchId, @RequestParam boolean isAccepted) {
-        matchServiceImpl.respondToMatch(matchId, isAccepted);
+    public MatchResponseDto respondToMatch(@PathVariable Long matchId, @RequestParam boolean isAccepted) {
+        return matchServiceImpl.respondToMatch(matchId, isAccepted);
     }
 
     @GetMapping("/can-chat")

@@ -12,5 +12,5 @@ public class PostResponseDto {
     private String subTopic;
     private Date createDate;
     private String userName;
-    private List<MatchResponseDto> matches;
+//    private List<MatchResponseDto> matches;
 }

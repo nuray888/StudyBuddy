@@ -15,14 +15,38 @@ public class EmailServiceImpl implements EmailService {
         this.javaMailSender = javaMailSender;
     }
 
-    public void sendMatchNotification(String to, String matchedUserName){
-        SimpleMailMessage message=new SimpleMailMessage();
+//    public void sendMatchNotification(String to, String matchedUserName){
+//        SimpleMailMessage message=new SimpleMailMessage();
+//        message.setFrom(from);
+//        message.setTo(to);
+//        message.setSubject("You have a new request!!");
+//        message.setText("You have one request from "+matchedUserName);
+//        javaMailSender.send(message);
+//
+//    }
+//    public void respondMatchNotification(String to, String matchedUserName){
+//        SimpleMailMessage message=new SimpleMailMessage();
+//        message.setFrom(from);
+//        message.setTo(to);
+//        message.setSubject("Respond to the request!!");
+//        message.setText("You have one request from "+matchedUserName);
+//        javaMailSender.send(message);;
+//    }
+
+    public void sendMatchNotification(String to, String matchedUserName, boolean isResponse) {
+        SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(from);
         message.setTo(to);
-        message.setSubject("You have a new match!!");
-        message.setText("You have one match with "+matchedUserName);
-        javaMailSender.send(message);
+        if (isResponse) {
+            message.setSubject("Respond to the request!!");
+            message.setText("You have one response from " + matchedUserName);
+        } else {
 
+            message.setSubject("You have a new request!!");
+            message.setText("You have one request from " + matchedUserName);
+        }
+        javaMailSender.send(message);
     }
+
 
 }

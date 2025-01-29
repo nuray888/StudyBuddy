@@ -97,18 +97,18 @@ public class PostServiceImpl implements PostService {
 
         Post savedPost = repository.save(post);
 
-
-        List<MatchResponseDto> matches = matchServiceImpl.findMatches(user.getId());
-
-
-        for (MatchResponseDto match : matches) {
-            emailServiceImpl.sendMatchNotification(match.getMatchedUserEmail(), user.getUserName());
-            emailServiceImpl.sendMatchNotification(user.getEmail(), match.getMatchedUserName());
-        }
+//
+//        List<MatchResponseDto> matches = matchServiceImpl.findMatches(user.getId());
+//
+//
+//        for (MatchResponseDto match : matches) {
+//            emailServiceImpl.sendMatchNotification(match.getMatchedUserEmail(), user.getUserName());
+//            emailServiceImpl.sendMatchNotification(user.getEmail(), match.getMatchedUserName());
+//        }
 
 
         PostResponseDto response = modelMapper.map(savedPost, PostResponseDto.class);
-        response.setMatches(matches);
+//        response.setMatches(matches);
         return response;
     }
 

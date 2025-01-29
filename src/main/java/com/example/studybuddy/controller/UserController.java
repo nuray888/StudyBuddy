@@ -69,13 +69,10 @@ public class UserController {
         service.updateLastSeen(userId);
     }
 
-    @PostMapping("/{senderId}/send-message/{recipientId}")
-    public ResponseEntity<String> sendTestMessage(@PathVariable Long senderId, @PathVariable Long recipientId, @RequestBody String message) {
-
-       // Context daxilinden userId goturulmelidir ve evez olunmalidir
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        User currentUser = (User) authentication.getPrincipal(); // User entity'sini al
-//        Long senderId = currentUser.getId();// Kullanıcı ID'sini al
+    @PostMapping("/send-message/{recipientId}")
+    public ResponseEntity<String> sendTestMessage( @PathVariable Long recipientId, @RequestBody String message) {
+        User user=service.getCurrentUser();
+        Long senderId=user.getId();
 
 
         boolean canChat=matchService.canUsersChat(senderId,recipientId);
@@ -92,17 +89,14 @@ public class UserController {
 
         return new ResponseEntity<>("Message sent", HttpStatus.OK);
     }
-//    @PostMapping("send-message/{recipientId}")
-//    public ResponseEntity<String> sendTestMessage(@PathVariable Long recipientId,@RequestBody String message){
-//        Long senderId=getCurrent
-//    }
 
 
 
+    @GetMapping("/chat-with/{otherUserId}/messages")
+    public ResponseEntity<List<ChatMessage>> getChatMessages( @PathVariable Long otherUserId) {
+        User user=service.getCurrentUser();
+        Long userId=user.getId();
 
-
-    @GetMapping("/{userId}/chat-with/{otherUserId}/messages")
-    public ResponseEntity<List<ChatMessage>> getChatMessages(@PathVariable Long userId, @PathVariable Long otherUserId) {
         List<ChatMessage> chatMessages = chatMessageServiceImpl.findChatMessages(userId, otherUserId);
         return new ResponseEntity<>(chatMessages, HttpStatus.OK);
     }
