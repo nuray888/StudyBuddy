@@ -18,7 +18,9 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -30,32 +32,59 @@ public class MatchServiceImpl implements MatchService {
     private final EmailServiceImpl emailServiceImpl;
 //    private final CurrencyValidatorForMonetaryAmount currencyValidatorForMonetaryAmount;
 
-    public List<MatchResponseDto> findMatches() {
-        User user=getCurrentUser();
-        Long userId=user.getId();
+//    public List<MatchResponseDto> findMatches() {
+//        User user=getCurrentUser();
+//        Long userId=user.getId();
+//
+//        List<Post> userPosts = user.getPosts();
+//        List<MatchResponseDto> matches = new ArrayList<>();
+//
+//        for (Post post : userPosts) {
+//            List<Post> matchingPosts = postRepository.findByTopicAndSubTopic(post.getTopic().toLowerCase(), post.getSubTopic().toLowerCase());
+//
+//            for (Post matchPost : matchingPosts) {
+//                if (!matchPost.getUser().getId().equals(userId)) {
+//                    User matchedUser = matchPost.getUser();
+//                    matches.add(new MatchResponseDto(
+//                            matchedUser.getId(),
+//                            matchedUser.getUserName(),
+//                            matchedUser.getEmail()
+//                    ));
+//                }
+//            }
+//        }
+//        return matches;
+//    }
+public List<MatchResponseDto> findMatches() {
+    User user = getCurrentUser();
+    Long userId = user.getId();
 
-//        User user = userRepository.findById(userId)
-//                .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + userId));
+    List<Post> userPosts = user.getPosts();
+    List<MatchResponseDto> matches = new ArrayList<>();
+    Set<Long> addedUserIds = new HashSet<>();
 
-        List<Post> userPosts = user.getPosts();
-        List<MatchResponseDto> matches = new ArrayList<>();
+    for (Post post : userPosts) {
+        List<Post> matchingPosts = postRepository.findByTopicAndSubTopic(
+                post.getTopic().toLowerCase(),
+                post.getSubTopic().toLowerCase()
+        );
 
-        for (Post post : userPosts) {
-            List<Post> matchingPosts = postRepository.findByTopicAndSubTopic(post.getTopic().toLowerCase(), post.getSubTopic().toLowerCase());
+        for (Post matchPost : matchingPosts) {
+            User matchedUser = matchPost.getUser();
+            Long matchedUserId = matchedUser.getId();
 
-            for (Post matchPost : matchingPosts) {
-                if (!matchPost.getUser().getId().equals(userId)) {
-                    User matchedUser = matchPost.getUser();
-                    matches.add(new MatchResponseDto(
-                            matchedUser.getId(),
-                            matchedUser.getUserName(),
-                            matchedUser.getEmail()
-                    ));
-                }
+            if (!matchedUserId.equals(userId) && addedUserIds.add(matchedUserId)) {
+                matches.add(new MatchResponseDto(
+                        matchedUserId,
+                        matchedUser.getUserName(),
+                        matchedUser.getEmail()
+                ));
             }
         }
-        return matches;
     }
+    return matches;
+}
+
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public MatchResponseDto requestMatch(MatchRequestDto matchRequestDto) {

@@ -14,6 +14,7 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +29,7 @@ public class UserController {
     private final MatchServiceImpl matchService;
     private final ChatMessageServiceImpl chatMessageServiceImpl;
 
-
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @GetMapping("/get-all")
     public ResponseEntity<List<UserResponseDto>> getAllController() {
         List<UserResponseDto> all = service.getAll();
@@ -70,13 +71,13 @@ public class UserController {
     }
 
     @PostMapping("/send-message/{recipientId}")
-    public ResponseEntity<String> sendTestMessage( @PathVariable Long recipientId, @RequestBody String message) {
-        User user=service.getCurrentUser();
-        Long senderId=user.getId();
+    public ResponseEntity<String> sendTestMessage(@PathVariable Long recipientId, @RequestBody String message) {
+        User user = service.getCurrentUser();
+        Long senderId = user.getId();
 
 
-        boolean canChat=matchService.canUsersChat(senderId,recipientId);
-        if(!canChat){
+        boolean canChat = matchService.canUsersChat(senderId, recipientId);
+        if (!canChat) {
             throw new APIException("You can't send messages to this user.");
         }
         ChatMessage chatMessage = new ChatMessage();
@@ -91,16 +92,14 @@ public class UserController {
     }
 
 
-
     @GetMapping("/chat-with/{otherUserId}/messages")
-    public ResponseEntity<List<ChatMessage>> getChatMessages( @PathVariable Long otherUserId) {
-        User user=service.getCurrentUser();
-        Long userId=user.getId();
+    public ResponseEntity<List<ChatMessage>> getChatMessages(@PathVariable Long otherUserId) {
+        User user = service.getCurrentUser();
+        Long userId = user.getId();
 
         List<ChatMessage> chatMessages = chatMessageServiceImpl.findChatMessages(userId, otherUserId);
         return new ResponseEntity<>(chatMessages, HttpStatus.OK);
     }
-
 
 
 }

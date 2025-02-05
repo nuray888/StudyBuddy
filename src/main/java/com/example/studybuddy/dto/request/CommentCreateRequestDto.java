@@ -4,9 +4,7 @@ import lombok.Data;
 
 @Data
 public class CommentCreateRequestDto {
-//    Long id;
-    Long userId;
-    Long postId;
-    String text;
+    private Long postId;
+    private String text;
 
 }

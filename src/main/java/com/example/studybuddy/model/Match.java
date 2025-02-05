@@ -13,14 +13,14 @@ public class Match {
 
     @ManyToOne
     @JoinColumn(name = "requester_id", nullable = false)
-    private User requester; // User who initiated the match request
+    private User requester;
 
     @ManyToOne
     @JoinColumn(name = "receiver_id", nullable = false)
-    private User receiver; // User who received the match request
+    private User receiver;
 
     @Enumerated(EnumType.STRING)
-    private MatchStatus status; // Match status (PENDING, ACCEPTED, REJECTED)
+    private MatchStatus status;
 
 
 }

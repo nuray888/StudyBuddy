@@ -28,8 +28,8 @@ public class CommentController {
     private final CommentServiceImpl service;
     
     @GetMapping("get-all")
-    public ResponseEntity<List<CommentResponseDto>> getAllComments(@RequestParam Long userId, @RequestParam Long postId) {
-        List<CommentResponseDto> allCommentsWithParam = service.getAllCommentsWithParam(userId, postId);
+    public ResponseEntity<List<CommentResponseDto>> getAllComments(@RequestParam Long postId) {
+        List<CommentResponseDto> allCommentsWithParam = service.getAllCommentsWithParam(postId);
         return new ResponseEntity<>(allCommentsWithParam, HttpStatus.OK);
     }
 

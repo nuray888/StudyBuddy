@@ -88,7 +88,8 @@ public class PostServiceImpl implements PostService {
         User user = getCurrentUser();
 
         if (!isStudyRelated(postRequestDto.getTopic(), postRequestDto.getSubTopic())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Topic and subtopic must be study-related.");
+            throw new APIException("Topic and subt" +
+                    "opic must be study related");
         }
 
         Post post = modelMapper.map(postRequestDto, Post.class);

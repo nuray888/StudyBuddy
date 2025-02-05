@@ -3,6 +3,7 @@ package com.example.studybuddy.service.serviceImpl;
 import com.example.studybuddy.dto.request.CommentCreateRequestDto;
 import com.example.studybuddy.dto.request.CommentUpdateRequestDto;
 import com.example.studybuddy.dto.response.CommentResponseDto;
+import com.example.studybuddy.exception.BadRequestException;
 import com.example.studybuddy.exception.ResourceNotFoundException;
 import com.example.studybuddy.model.Post;
 import com.example.studybuddy.model.User;
@@ -13,6 +14,7 @@ import com.example.studybuddy.service.CommentService;
 import com.example.studybuddy.model.Comment;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -27,10 +29,10 @@ public class CommentServiceImpl implements CommentService {
     private final ModelMapper modelMapper;
 
     @Override
-    public List<CommentResponseDto> getAllCommentsWithParam(Long userId, Long postId) {
-        userRepository.findById(userId).orElseThrow(()->new ResourceNotFoundException("User not found with "+userId));
+    public List<CommentResponseDto> getAllCommentsWithParam(Long postId) {
+        User user = getCurrentUser();
         postRepository.findById(postId).orElseThrow(()->new ResourceNotFoundException("Post not found with "+postId));
-        List<Comment> comments=commentRepository.findByUserIdAndPostId(userId,postId);
+        List<Comment> comments=commentRepository.findByUserIdAndPostId(user.getId(),postId);
         return comments.stream().map(c->modelMapper.map(c, CommentResponseDto.class)).toList();
     }
 
@@ -42,7 +44,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public CommentResponseDto createOneComment(CommentCreateRequestDto request) {
-        User user=userRepository.findById(request.getUserId()).orElseThrow(()->new ResourceNotFoundException("User not found with "+request.getUserId()));
+        User user = getCurrentUser();
         Post post=postRepository.findById(request.getPostId()).orElseThrow(()->new ResourceNotFoundException("Post not found with "+request.getPostId()));
         Comment commentToSave = new Comment();
         commentToSave.setPost(post);
@@ -55,17 +57,34 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public CommentResponseDto updateOneCommentById(Long commentId, CommentUpdateRequestDto request) {
-        Comment comment=commentRepository.findById(commentId).orElseThrow(()->new ResourceNotFoundException("Comment not found with "+commentId));
+        User user = getCurrentUser();
+        Comment comment=commentRepository.findById(commentId)
+                .orElseThrow(()->new ResourceNotFoundException("Comment not found with "+commentId));
+        if (!comment.getUser().equals(user)) {
+            throw new BadRequestException("You do not have permission to update this comment");
+        }
         modelMapper.map(request,comment);
+        comment.setUser(user);
         Comment updatedComment=commentRepository.save(comment);
         return modelMapper.map(updatedComment, CommentResponseDto.class);
     }
 
     @Override
     public void deleteOneCommentById(Long commentId) {
-        Comment comment=commentRepository.findById(commentId).orElseThrow(()->new ResourceNotFoundException("Comment not found with "+commentId));
-        commentRepository.delete(comment);
+        User user = getCurrentUser();
+        Comment comment=commentRepository.findById(commentId)
+                .orElseThrow(()->new ResourceNotFoundException("Comment not found with "+commentId));
+        if (!comment.getUser().equals(user)) {
+            throw new BadRequestException("You do not have permission to delete this comment");
+        }
+        commentRepository.deleteById(commentId);
 
+    }
 
+    @Override
+    public User getCurrentUser() {
+        String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByUserName(userName)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 }
